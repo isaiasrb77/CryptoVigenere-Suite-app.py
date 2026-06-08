@@ -1,0 +1,140 @@
+import os
+
+def mostrar_menu(clave_actual):
+    """Muestra el menú interactivo con la clave cargada en memoria."""
+    print("\n" + "="*40)
+    print("      🔐 CRYPTOVIGENERE SUITE v1.0      ")
+    print(f"      [ Clave Activa: '{clave_actual}' ]")
+    print("="*40)
+    print("1. Cifrar mensaje")
+    print("2. Descifrar mensaje")
+    print("3. Ver Historial en Consola")
+    print("4. Cambiar Clave Activa")
+    print("5. Exportar Historial a TXT")
+    print("6. Salir")
+    print("="*40)
+
+def procesar_vigenere(texto, clave, modo="cifrar"):
+    """
+    Procesa el texto bajo el algoritmo Vigenère de forma polialfabética.
+    Soporta mayúsculas, minúsculas, espacios y caracteres especiales (Actividad 1).
+    """
+    resultado = ""
+    indice_clave = 0  # Controla la posición dentro de la clave de forma independiente
+    
+    # Si la clave está vacía por alguna razón, se usa una por defecto para evitar errores
+    if not clave:
+        clave = "DEFAULT"
+
+    for caracter in texto:
+        if caracter.isalpha():
+            # 1. Determinar base ASCII del carácter del texto
+            base_texto = 65 if caracter.isupper() else 97
+            valor_texto = ord(caracter) - base_texto
+            
+            # 2. Determinar base ASCII y valor del carácter de la clave correspondiente
+            caracter_clave = clave[indice_clave % len(clave)]
+            base_clave = 65 if caracter_clave.isupper() else 97
+            valor_clave = ord(caracter_clave) - base_clave
+            
+            # 3. Aplicar operador matemático modular según el modo
+            if modo == "cifrar":
+                nuevo_valor = (valor_texto + valor_clave) % 26
+            else:  # descifrar
+                nuevo_valor = (valor_texto - valor_clave) % 26
+                
+            # 4. Reconstruir el carácter transformado
+            resultado += chr(nuevo_valor + base_texto)
+            
+            # Crucial: Solo avanzamos en la clave si el carácter procesado fue una letra
+            indice_clave += 1
+        else:
+            # Actividad 1: Números, espacios y signos conservan su formato original intacto
+            resultado += caracter
+            
+    return resultado
+
+def exportar_a_txt(historial):
+    """Genera de forma limpia el reporte físico historial_vigenere.txt (Actividad 2)."""
+    if not historial:
+        print("\n📭 No hay datos en el historial para exportar.")
+        return
+        
+    nombre_archivo = "historial_vigenere.txt"
+    try:
+        with open(nombre_archivo, "w", encoding="utf-8") as archivo:
+            archivo.write("==================================================\n")
+            archivo.write("       CRYPTOVIGENERE SUITE - REPORT LOG          \n")
+            archivo.write("==================================================\n\n")
+            for idx, reg in enumerate(historial, 1):
+                archivo.write(f"Operación #{idx} [{reg['operacion']}]\n")
+                archivo.write(f"Texto Base: {reg['texto']}\n")
+                archivo.write(f"Clave Usada: {reg['clave']}\n")
+                archivo.write(f"Resultado:  {reg['resultado']}\n")
+                archivo.write("-" * 50 + "\n")
+        print(f"\n💾 ¡Éxito! Reporte guardado en: {os.path.abspath(nombre_archivo)}")
+    except Exception as e:
+        print(f"\n❌ Error al intentar escribir el archivo: {e}")
+
+def principal():
+    """Función principal y coordinadora del entorno criptográfico."""
+    historial = []
+    contador_operaciones = 0  # Actividad 3
+    clave_activa = "CYBER"     # Clave inicial por defecto
+    
+    while True:
+        mostrar_menu(clave_activa)
+        opcion = input("Seleccione una opción (1-6): ").strip()
+        
+        if opcion in ("1", "2"):
+            modo = "cifrar" if opcion == "1" else "descifrar"
+            
+            mensaje = input(f"\nDigite el mensaje a {modo}: ")
+            
+            # Procesar la cadena
+            resultado = procesar_vigenere(mensaje, clave_activa, modo)
+            contador_operaciones += 1
+            
+            # Guardar el estado en el almacenamiento temporal
+            historial.append({
+                "operacion": modo.capitalize(),
+                "texto": mensaje,
+                "clave": clave_activa,
+                "resultado": resultado
+            })
+            
+            print(f"\n✨ Mensaje {modo}do exitosamente:")
+            print(f"👉 {resultado}")
+            print(f"📊 Total de operaciones en la sesión: {contador_operaciones}") # Actividad 3
+            
+        elif opcion == "3":
+            print("\n📜 --- HISTORIAL EN MEMORIA RAM ---")
+            if not historial:
+                print("El historial de consultas está vacío.")
+            else:
+                for idx, reg in enumerate(historial, 1):
+                    print(f"[{idx}] {reg['operacion']} -> Clave: {reg['clave']}")
+                    print(f"    In : {reg['texto']}")
+                    print(f"    Out: {reg['resultado']}")
+                print(f"\n📊 Total de mensajes procesados: {contador_operaciones}")
+                
+        elif opcion == "4":
+            # Actividad 4: Permitir cambiar la clave de forma dinámica sin salir del bucle
+            nueva_clave = input("\n🔑 Digite la nueva palabra clave (Solo letras): ").strip()
+            if nueva_clave.isalpha():
+                clave_activa = nueva_clave
+                print(f"✅ ¡Clave actualizada! Ahora las operaciones usarán: '{clave_activa}'")
+            else:
+                print("⚠️ Error: La clave debe contener únicamente caracteres alfabéticos.")
+                
+        elif opcion == "5":
+            exportar_a_txt(historial)
+            
+        elif opcion == "6":
+            print("\n🚪 Finalizando CryptoVigenere Suite. ¡Preparando motores para CryptoKFH v1!")
+            break
+        else:
+            print("\n⚠️ Opción inválida. Intente de nuevo ingresando un valor entre 1 y 6.")
+
+if __name__ == "__main__":
+    principal()
